@@ -1,19 +1,31 @@
 <?php
 
-namespace App\Models;
+namespace App\Http\Controllers;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\StockIn;
+use App\Models\Item;
+use App\Models\Supplier;
+use Illuminate\Http\Request;
 
-class Item extends Model
+class StockInController extends Controller
 {
-    use HasFactory;
+    public function index() {
+        $stockIns = StockIn::with(['item', 'supplier'])->latest()->get();
+        $items = Item::all();
+        $suppliers = Supplier::all();
+        return view('stock_in.index', compact('stockIns', 'items', 'suppliers'));
+    }
 
-    protected $fillable = ['category_id', 'code', 'name', 'stock', 'price'];
+    public function store(Request $request) {
+        $request->validate(['item_id' => 'required', 'supplier_id' => 'required', 'qty' => 'required|numeric', 'date' => 'required']);
+        
+        // Simpan log transaksi barang masuk
+        StockIn::create($request->all());
 
-    // Relasi: Barang ini termasuk dalam sebuah Kategori
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
+        // POIN PLUS KASUS NYATA: Otomatis tambah stok di tabel items
+        $item = Item::find($request->item_id);
+        $item->increment('stock', $request->qty);
+
+        return back()->with('success', 'Transaksi barang masuk berhasil dicatat. Stok bertambah!');
     }
 }

@@ -1,35 +1,21 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Models;
 
-use App\Models\StockOut;
-use App\Models\Item;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class StockOutController extends Controller
+class StockOut extends Model
 {
-    public function index() {
-        $stockOuts = StockOut::with('item')->latest()->get();
-        $items = Item::all();
-        return view('stock_out.index', compact('stockOuts', 'items'));
-    }
+    use HasFactory;
 
-    public function store(Request $request) {
-        $request->validate(['item_id' => 'required', 'qty' => 'required|numeric', 'date' => 'required']);
-        
-        $item = Item::find($request->item_id);
+    protected $table = 'stock_outs';
 
-        // Validasi agar stok tidak minus
-        if ($item->stock < $request->qty) {
-            return back()->withErrors(['qty' => 'Stok tidak mencukupi untuk dikeluarkan!'])->withInput();
-        }
+    protected $fillable = ['item_id', 'qty', 'date', 'notes'];
 
-        // Simpan log transaksi barang keluar
-        StockOut::create($request->all());
-
-        // POIN PLUS KASUS NYATA: Otomatis kurangi stok di tabel items
-        $item->decrement('stock', $request->qty);
-
-        return back()->with('success', 'Transaksi barang keluar berhasil dicatat. Stok berkurang!');
+    // Relasi ke tabel Item
+    public function item()
+    {
+        return $this->belongsTo(Item::class);
     }
 }
