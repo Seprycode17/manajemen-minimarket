@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate; // <--- WAJIB TAMBAHKAN INI
+use App\Models\User; // <--- WAJIB TAMBAHKAN INI
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // DAFTARKAN GERBANG IZIN ADMIN DI SINI
+        Gate::define('admin', function (User $user) {
+            return $user->role === 'admin';
+        });
     }
 }
